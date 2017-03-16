@@ -2,6 +2,7 @@
 title: "Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
+    fig_caption: yes
     highlight: tango
     keep_md: yes
     number_sections: yes
@@ -142,6 +143,7 @@ Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and 
 fiveminutes <- activity %>% group_by(interval) %>% summarise(mean.steps = mean(steps, na.rm = TRUE)) %>% mutate(seconds = trunc(interval/100) * 60 * 60 + (interval %% 100)*60) %>% as.data.frame
 glimpse(fiveminutes)
 ```
+
 ```{r Average daily activity pattern in 5 minutes intervals}
 breaks <- seq(0, 86400, length.out = 13)
 labels <- strftime(as.POSIXct(breaks, tz="GMT", origin="1970-01-01"), format = "%H:%M", tz="GMT")
@@ -236,6 +238,7 @@ One can see there is missing data at full days.  It will be checked whether miss
 missingDaily <- activity %>% group_by(date) %>% summarise(missing.intervals = sum(is.na(steps))) %>% as.data.frame
 glimpse(missingDaily)
 ```
+
 ```{r Total number of missing data intervals each day}
 breaks <- as.Date(which(missingDaily$missing.intervals!=0), origin=missingDaily$date[1]-1)
 labels <- strftime(breaks, format = "%a, %d/%m", tz="GMT")
@@ -389,6 +392,7 @@ glimpse(imputedKNN)
 dailyImputedMean <- imputedMean %>% group_by(date) %>% summarise(total.steps = sum(steps, na.rm = TRUE))
 glimpse(dailyImputedMean)
 ```
+
 ```{r Histogram of the total number of steps taken each with mean imputation}
 ggplot(dailyImputedMean, aes(x = total.steps)) +
 
@@ -414,6 +418,7 @@ ggplot(dailyImputedMean, aes(x = total.steps)) +
 dailyImputedKNN <- imputedKNN %>% group_by(date) %>% summarise(total.steps = sum(steps, na.rm = TRUE))
 glimpse(dailyImputedKNN)
 ```
+
 ```{r Histogram of the total number of steps taken each day with K-NN imputation}
 ggplot(dailyImputedKNN, aes(x = total.steps)) +
 
