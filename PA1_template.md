@@ -16,9 +16,9 @@ Dataset: [Activity monitoring data][1] [52K]
 
 The variables included in this dataset are:
 
-steps: Number of steps taking in a 5-minute interval (missing values are coded as NA)  
-date: The date on which the measurement was taken in YYYY-MM-DD format  
-interval: Identifier for the 5-minute interval in which measurement was taken  
+`step`: Number of steps taking in a 5-minute interval (missing values are coded as NA)  
+`date`: The date on which the measurement was taken in YYYY-MM-DD format  
+`interval`: Identifier for the 5-minute interval in which measurement was taken  
 The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset.
 
 ************************************
@@ -28,54 +28,16 @@ This research requires additional R packages.
 
 
 ```r
-library(dplyr)#, warn.conflicts = FALSE, quietly = TRUE)
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-```
-
-```
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
+library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(lubridate)#, warn.conflicts = FALSE)
-```
-
-```
-## 
-## Attaching package: 'lubridate'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     date
-```
-
-```r
+library(lubridate)
 library(impute)
 ```
 
 The installed packages versions used in this research are dplyr 0.5.0,tidyr 0.6.1, ggplot2 2.2.1, lubridate 1.6.0 and impute 1.48.0.
 
-The dataset zip file is automatically downloaded and umcompressed in case it's not already available locally. As the raw data is already in a tidy format, the only preprocessing is the coercion of the raw data columns to appropriate R data types:
-
-- Columns `steps` and `interval` to `integer` data type.
-- Column `date` to `Date` data type.
-- "NA" strings to `NA` values.
+The dataset zip file is automatically downloaded and uncompressed in case it's not already available locally.
 
 
 ```r
@@ -87,7 +49,18 @@ if (!file.exists(destfile)) {
 if (!file.exists("activity.csv") & file.exists(destfile)) {
     unzip(destfile, setTimes = TRUE)
 }
-activity <- read.csv("activity.csv", colClasses = c("integer", "Date", "integer"))
+```
+
+Import data columns with appropriate R classes and values:
+
+- `steps` and `interval` as `integer` data type.
+- `date` as `Date` data type.
+- "NA" strings as `NA` values.
+
+
+```r
+if (!exists("activity"))
+    activity <- read.csv("activity.csv", colClasses = c("integer", "Date", "integer"), na.strings = "NA")
 glimpse(activity)
 ```
 
@@ -99,14 +72,21 @@ glimpse(activity)
 ## $ interval <int> 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100, 10...
 ```
 
-***************************************************
+******************************************
 # Mean total number of steps taken per day
 
-**Calculate the total number of steps taken per day**
+## Calculate the total number of steps taken per day
+
+For this part of the assignment, you can ignore the missing values in the dataset.
 
 
 ```r
-daily <- activity %>% group_by(date) %>% summarise(total.steps = sum(steps, na.rm = TRUE)) %>% as.data.frame
+if (!exists("daily")) {
+    daily <- activity %>%
+    group_by(date) %>%
+    summarise(total.steps = sum(steps, na.rm = TRUE)) %>%
+    as.data.frame
+}
 glimpse(daily)
 ```
 
@@ -117,27 +97,35 @@ glimpse(daily)
 ## $ total.steps <int> 0, 126, 11352, 12116, 13294, 15420, 11015, 0, 1281...
 ```
 
-**Make a histogram of the total number of steps taken each day**
+## Histogram of the total number of steps taken each day
+
+
 
 
 ```r
-ggplot(daily, aes(total.steps)) + geom_histogram(fill = "dark green", color = "black") + xlab("total steps each day") +
-    ggtitle("Histogram of the total number of steps taken each day")
-```
+ggplot(daily, aes(x = total.steps)) +
 
-```
-## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    geom_histogram(aes(y = ..density..), binwidth = 2000, fill = "dark green", color = "black") +
+    
+    geom_line(aes(y = ..density.., colour = 'Kernel'), stat = "density", lwd = 1) +
+
+    stat_function(fun = dnorm,
+                  args = list(mean = mean(daily$total.steps), sd = sd(daily$total.steps)),
+                  aes(colour = "Normal"), lwd = 1) +
+
+    scale_colour_manual(name = 'Density', values = c('red', 'blue')) +
+    xlab("total steps each day") +# ylab("") +
+    ggtitle("Histogram of the total number of steps taken each day") +
+    theme(legend.position = c(0.9, 0.85)) +
+    #scale_y_continuous(labels = scales:percent) +
+    scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
 ```
 
 ![](PA1_template_files/figure-html/Histogram of the total number of steps taken each day-1.png)<!-- -->
 
-This plot is a frequency distribution of the toal number of steps taken each day in a period of `nrow(daily)` days.
-
-That may be due to different reasons like missing data or most part of the day the subject didn't walk.
-**Calculate and report the mean and median of the total number of steps taken per day**
+## Mean and median of the total number of steps taken per day
 
 Mean of the total number of steps taken per day
-
 
 ```r
 mean(daily$total.steps, na.rm = TRUE)
@@ -146,9 +134,7 @@ mean(daily$total.steps, na.rm = TRUE)
 ```
 ## [1] 9354.23
 ```
-
 Median of the total number of steps taken per day
-
 
 ```r
 median(daily$total.steps, na.rm = TRUE)
@@ -158,7 +144,10 @@ median(daily$total.steps, na.rm = TRUE)
 ## [1] 10395
 ```
 
+********************************
 # Average daily activity pattern
+
+## Time series plot
 
 Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
@@ -176,18 +165,22 @@ glimpse(fiveminutes)
 ## $ seconds    <dbl> 0, 300, 600, 900, 1200, 1500, 1800, 2100, 2400, 270...
 ```
 
-
 ```r
 breaks <- seq(0, 86400, length.out = 13)
 labels <- strftime(as.POSIXct(breaks, tz="GMT", origin="1970-01-01"), format = "%H:%M", tz="GMT")
 ggplot(fiveminutes, aes(seconds, mean.steps)) + geom_line(color = "dark green", size=1) +
+    geom_smooth(method="lm", aes(colour="Linear"), lwd = 0.5) +
+    geom_smooth(method="loess", aes(colour = 'Polynomial'), lwd = 0.5) +
+    scale_colour_manual(name = 'Smoothing', values=c("red","blue")) +
     ggtitle("Average daily activity pattern in 5 minutes intervals") +
     ylab("Mean Steps") + xlab("time of the day") +
     scale_x_time(breaks = breaks, labels = labels) +
-    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+    theme(legend.position = c(0.9, 0.85))
 ```
 
 ![](PA1_template_files/figure-html/Average daily activity pattern in 5 minutes intervals-1.png)<!-- -->
+
+## Maximum number of steps
 
 Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
 
@@ -203,11 +196,10 @@ Which 5-minute interval, on average across all the days in the dataset, contains
 *************************
 # Imputing missing values
 
-Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+Note that there are a number of days/intervals where there is missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
 
-##Missing values in the dataset
+## Total number of missing values in the dataset
 
-Total number of missing values in the dataset
 
 ```r
 (missingValuesTotal <- sum(is.na(activity$steps)))
@@ -227,31 +219,30 @@ Proportion of the missing values
 ```
 This proportion of the dataset observations is considered high and deserve an exploration of the missing data pattern.
 
-##Missing data patterns
+## Strategy for filling in all of the missing values in the dataset
 
-In order to plot a heatmap images is necessary to transform the long-form dataset in a two-dimension matrix.
+The strategy for filling in all of the missing values in the dataset does not need to be sophisticated. For example, one can use the mean/median for that day, or the mean for that 5-minute interval, etc.
 
-The first dimension, row, is the number of days in the dataset
+According to Peng (2016), in the book *Exploratory Data Analysis*:
 
-```r
-(day.dim <- nrow(daily))
-```
+_"Determine the reason for the missing data; what is the process that lead to the data
+being missing? Is the proportion of missing values so high as to invalidate any sort of analysis? Is there information in the dataset that would allow you to predict/infer the values of the missing data?"_
 
-```
-## [1] 61
-```
-The second dimension, column, is the number of five-minutes intervals in the dataset
+As per this research scope didn't cover published information about the reasons missing data of this dataset, one can presume some hyphotesis:
 
-```r
-(fivemin.dim <- nrow(fiveminutes))
-```
+* The device may fail to collect and store raw data or run out of battery.  
+* The test subject forget either to charge or switch on the device during the experiment period.  
+* The process to collect data from the device and build the raw dataset may fail.
 
-```
-## [1] 288
-```
+After next exploratory data analysis and imputation experiments one can compare the impact of the change against the absence of the data.
 
-Transform the long-form dataset in a 61 by 288 matrix.
+The missing data represents 13.11% of the dataset observations which, although is considered high, possibly would not invalidate analysis based on this dataset.
 
+### Missing data patterns
+
+**Heatmap of daily activity pattern in 5 minutes intervals**
+
+Transform the long-form (17568 by 3) dataset in a wider matrix.
 
 ```r
 intervalMatrix <- activity %>%
@@ -259,31 +250,29 @@ intervalMatrix <- activity %>%
     mutate(date = NULL) %>%
     as.matrix
 ```
+This new layout features 61 days as observations and 288 five-minutes intervals as variables.
 
-This new layout features multi-variate data where the 61 days are observations and the 288 five-minutes intervals are variables.
-
-Previewing 10 of 61 rows and 20 of 288 columns.
+Previewing 10 rows by 10 columns.
 
 
 ```r
-intervalMatrix[1:10,1:20]
+intervalMatrix[1:10,1:10]
 ```
 
 ```
-##        0  5 10 15 20 25 30 35 40 45 50 55 100 105 110 115 120 125 130 135
-##  [1,] NA NA NA NA NA NA NA NA NA NA NA NA  NA  NA  NA  NA  NA  NA  NA  NA
-##  [2,]  0  0  0  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0
-##  [3,]  0  0  0  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0
-##  [4,] 47  0  0  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0
-##  [5,]  0  0  0  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0
-##  [6,]  0  0  0  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0
-##  [7,]  0  0  0  0  0  0  0  0  0  0  0  7   0  36   0   0   0   0   8   0
-##  [8,] NA NA NA NA NA NA NA NA NA NA NA NA  NA  NA  NA  NA  NA  NA  NA  NA
-##  [9,]  0  0  0  0  0 13 28  0  0  0  0  0   0   0   0   0   0   0   0   0
-## [10,] 34 18  7  0  0  0  0  0  0  0  0  0   0   0   0   0   0   0   0   0
+##        0  5 10 15 20 25 30 35 40 45
+##  [1,] NA NA NA NA NA NA NA NA NA NA
+##  [2,]  0  0  0  0  0  0  0  0  0  0
+##  [3,]  0  0  0  0  0  0  0  0  0  0
+##  [4,] 47  0  0  0  0  0  0  0  0  0
+##  [5,]  0  0  0  0  0  0  0  0  0  0
+##  [6,]  0  0  0  0  0  0  0  0  0  0
+##  [7,]  0  0  0  0  0  0  0  0  0  0
+##  [8,] NA NA NA NA NA NA NA NA NA NA
+##  [9,]  0  0  0  0  0 13 28  0  0  0
+## [10,] 34 18  7  0  0  0  0  0  0  0
 ```
 
-**Activity Heatmap**
 
 ```r
 colors<-length(unique(as.vector(intervalMatrix)))
@@ -291,16 +280,16 @@ par(mar=c(4, 4, 4, 2))
 image(1:ncol(intervalMatrix),
       1:nrow(intervalMatrix), ylim=c(nrow(intervalMatrix),1),
       t(intervalMatrix),
-      xlab = paste0(fivemin.dim," five-minutes intervals"),
-      ylab = paste0(day.dim," days"),
+      xlab = paste0(ncol(intervalMatrix)," five-minutes intervals"),
+      ylab = paste0(nrow(intervalMatrix)," days"),
       col = heat.colors(colors),
-      main = "Activity Heatmap")
+      main = "Heatmap of daily activity pattern in 5 minutes intervals")
 mtext("(full horizontal lines are missing data days)")
 ```
 
-![](PA1_template_files/figure-html/Activity Heatmap-1.png)<!-- -->
+![](PA1_template_files/figure-html/Heatmap of daily activity pattern in 5 minutes intervals-1.png)<!-- -->
 
-One can see there are missing data at full days.  It will be checked whether missing data also occurs during parts of the days.
+One can see there is missing data at full days.  It will be checked whether missing data also occurs during parts of the days.
 
 
 ```r
@@ -323,7 +312,6 @@ ggplot(missingDaily, aes(date, missing.intervals)) + geom_col(fill = "dark red",
     scale_y_continuous(breaks = seq.int(0, 288, length.out = 5)) +
     ylab("missing intervals") + xlab("days with missing data") +
     scale_x_date(breaks = breaks, labels = labels, date_minor_breaks = "1 days", minor_breaks = NULL) +
-    #xlab("date (weekday, day/month)") +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
@@ -341,7 +329,7 @@ Maxixum missing intervals in a day:
 Days without any data:
 
 ```r
-(missingDays <- sum(missingDaily$missing.intervals==fivemin.dim))
+(missingDays <- sum(missingDaily$missing.intervals==nrow(fiveminutes)))
 ```
 
 ```
@@ -359,7 +347,7 @@ Days with full interval data:
 Days with partial interval data:
 
 ```r
-(partialDays <- sum(missingDaily$missing.intervals > 0 & missingDaily$missing.intervals < fivemin.dim))
+(partialDays <- sum(missingDaily$missing.intervals > 0 & missingDaily$missing.intervals < nrow(fiveminutes)))
 ```
 
 ```
@@ -391,30 +379,7 @@ Based on this distribution it's being assumed that missing data days occur at ra
 
 As there are only full missing data days, there is no point to perform a deeper analysis to identify missing data patterns within days.
 
-##Imputation strategy
-
-The strategy for filling in all of the missing values in the dataset  does not need to be sophisticated. For example, one can use the mean/median for that day, or the mean for that 5-minute interval, etc.
-
-According to Peng (2016), in the book *Exploratory Data Analysis*:
-
-_"Determine the reason for the missing data; what is the process that lead to the data
-being missing? Is the proportion of missing values so high as to invalidate any sort of analysis? Is there information in the dataset that would allow you to predict/infer the values of the missing data?"_
-
-**Possible reasons for the missing data**
-
-As per this research scope didn't cover published information about the missing data of this dataset, one can presume some hyphotesis:
-
-* The device may fail to collect and store raw data or run out of battery.  
-* The test subject forget either to charge or switch on the device during the experiment period.  
-* The process to collect data from the device and build the raw dataset may fail.
-
-**Impact of the missing data in the validity of the research**
-
-After next exploratory data analysis and imputation experiments one can compare the impact of the change against the absence of the data.
-
-The missing data represents 13.11% of the dataset observations which, although is considered high, possibly it would not invalidate any analysis based on this dataset.  This topic will be revisited later.
-
-##Imputation algorithms
+### Imputation algorithms
 
 This research will experiment and compare two techniques:
 
@@ -437,12 +402,13 @@ _"Since nearest neighbor imputation costs $O(p*log(p))$ operations per gene, whe
 
 At this point of the research, the results of the K-NN algorithm is unknown but they will be compared with the single imputation using mean substitution later.
 
-##Imputed dataset
+## Imputed dataset
 
 Create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-**Using single imputation, mean substitution**
+### Using single imputation, mean substitution
 
+For each missing 5-minute interval, substitute the mean for that 5-minute interval taken across all days.
 
 ```r
 imputedMean <- activity %>%
@@ -458,15 +424,16 @@ glimpse(imputedMean)
 ## $ interval <int> 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100, 10...
 ```
 
-***Using k*-nearest neighbor averaging**
+### Using *k*-nearest neighbor averaging
 
 The default $k$ is 10 neighbors.
 
-As there are missing data only on 8 full days, the maximum *k*-neighbors possible are 53.
+TODO: REVISE
+As there is missing data only on 8 full days, the maximum *k*-neighbors possible are 53.
 
 
 ```r
-(maxNeighbors <- day.dim - missingDays)
+(maxNeighbors <- nrow(missingDaily) - missingDays)
 ```
 
 ```
@@ -474,11 +441,12 @@ As there are missing data only on 8 full days, the maximum *k*-neighbors possibl
 ```
 Calculate `rowmax`, the maximum percent missing data allowed in any row (default 50%). For any rows with more than rowmax%, missing are imputed using the overall mean per sample.
 
+TODO: REVISE
 In order to avoid the bias of using overall mean per sample, `rowmax` should never be reached.  As there are full rows (days) with missing values, `rowmax` should be 288/288, 1.  A general formula to optimize `rowmax` is dividing the maximum number of missing values in a row by the number of columns:
 
 
 ```r
-rowmax <- maxMissingIntervals / fivemin.dim ; sprintf("%1.2f%%", 100*rowmax)
+rowmax <- maxMissingIntervals / nrow(fiveminutes) ; sprintf("%1.2f%%", 100*rowmax)
 ```
 
 ```
@@ -486,7 +454,8 @@ rowmax <- maxMissingIntervals / fivemin.dim ; sprintf("%1.2f%%", 100*rowmax)
 ```
 Calculate `colmax`, the maximum percent missing data allowed in any column (default 80%). If any column has more than colmax% missing data, the program halts and reports an error.
 
-As there are missing data only in 8 full days (rows) of 61 days the `colmax` should be at minimum the 8/61 ratio, 0.1311475.  A general formula to ensure a minimum `colmax` is dividing the maximum number of missing values in a column by the number of rows:
+TODO: REVISE
+As there is missing data only in 8 full days (rows) of 61 days,  the `colmax` should be at minimum the 8/61 ratio, 0.1311475.  A general formula to ensure a minimum `colmax` is dividing the maximum number of missing values in a column by the number of rows:
 
 
 ```r
@@ -548,9 +517,83 @@ glimpse(imputedKNN)
 ## $ interval <int> 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 100, 10...
 ```
 
-##Imputation comparison
+## Make a histogram of the new total number of steps taken each day after mean substitution
 
-Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+### Using single imputation, mean substitution
+
+
+```r
+dailyImputedMean <- imputedMean %>% group_by(date) %>% summarise(total.steps = sum(steps, na.rm = TRUE))
+glimpse(dailyImputedMean)
+```
+
+```
+## Observations: 61
+## Variables: 2
+## $ date        <date> 2012-10-01, 2012-10-02, 2012-10-03, 2012-10-04, 2...
+## $ total.steps <int> 10762, 126, 11352, 12116, 13294, 15420, 11015, 0, ...
+```
+
+```r
+ggplot(dailyImputedMean, aes(x = total.steps)) +
+
+    geom_histogram(aes(y = ..density..), binwidth = 2000, fill = "dark green", color = "black") +
+    
+    geom_line(aes(y = ..density.., colour = 'Kernel'), stat = "density", lwd = 1) +
+
+    stat_function(fun = dnorm,
+                  args = list(mean = mean(dailyImputedMean$total.steps), sd = sd(dailyImputedMean$total.steps)),
+                  aes(colour = "Normal"), lwd = 1) +
+
+    scale_colour_manual(name = 'Density', values = c('red', 'blue')) +
+    xlab("total steps each day") +# ylab("") +
+    ggtitle("Histogram of the total number of steps taken each day with mean imputation") +
+    theme(legend.position = c(0.9, 0.85)) +
+    #scale_y_continuous(labels = scales:percent) +
+    scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
+```
+
+![](PA1_template_files/figure-html/Histogram of the total number of steps taken each with mean imputation-1.png)<!-- -->
+
+### Using *k*-nearest neighbor averaging
+
+
+```r
+dailyImputedKNN <- imputedKNN %>% group_by(date) %>% summarise(total.steps = sum(steps, na.rm = TRUE))
+glimpse(dailyImputedKNN)
+```
+
+```
+## Observations: 61
+## Variables: 2
+## $ date        <date> 2012-10-01, 2012-10-02, 2012-10-03, 2012-10-04, 2...
+## $ total.steps <int> 10688, 126, 11352, 12116, 13294, 15420, 11015, 106...
+```
+
+```r
+ggplot(dailyImputedKNN, aes(x = total.steps)) +
+
+    geom_histogram(aes(y = ..density..), binwidth = 2000, fill = "dark green", color = "black") +
+    
+    geom_line(aes(y = ..density.., colour = 'Kernel'), stat = "density", lwd = 1) +
+
+    stat_function(fun = dnorm,
+                  args = list(mean = mean(dailyImputedKNN$total.steps), sd = sd(dailyImputedKNN$total.steps)),
+                  aes(colour = "Normal"), lwd = 1) +
+
+    scale_colour_manual(name = 'Density', values = c('red', 'blue')) +
+    xlab("total steps each day") +# ylab("") +
+    ggtitle("Histogram of the total number of steps taken each day with K-NN imputation") +
+    theme(legend.position = c(0.9, 0.85)) +
+    #scale_y_continuous(labels = scales:percent) +
+    scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
+```
+
+![](PA1_template_files/figure-html/Histogram of the total number of steps taken each day with K-NN imputation-1.png)<!-- -->
+
+## Do these values differ from the estimates from the first part of the assignment?
+
+## What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
 
 ***************************************************************************
@@ -558,13 +601,13 @@ Make a histogram of the total number of steps taken each day and Calculate and r
 
 For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
 
-**Weekdays and weekend factors**
+## Weekdays and weekend factors
 
 Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
 
 
 
-**five-minute interval average steps across all weekdays or weekends**
+## Five-minute interval average steps across all weekdays or weekends**
 
 Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
