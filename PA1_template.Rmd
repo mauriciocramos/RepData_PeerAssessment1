@@ -1,7 +1,7 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-  html_document:
+  html_document: 
     keep_md: true
 ---
 
@@ -99,7 +99,7 @@ ggplot(daily, aes(x = total.steps)) +
     scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
 ```
 
-```{r Histogram of the total number of steps taken each day}
+```{r Histogram-steps-each-day}
 ggplot(daily, aes(x = total.steps)) +
 
     geom_histogram(aes(y = ..density..), binwidth = 2000, fill = "dark green", color = "black") +
@@ -141,7 +141,7 @@ fiveminutes <- activity %>% group_by(interval) %>% summarise(mean.steps = mean(s
 glimpse(fiveminutes)
 ```
 
-```{r Average daily activity pattern in 5 minutes intervals}
+```{r Average-daily-activity-pattern}
 breaks <- seq(0, 86400, length.out = 13)
 labels <- strftime(as.POSIXct(breaks, tz="GMT", origin="1970-01-01"), format = "%H:%M", tz="GMT")
 ggplot(fiveminutes, aes(seconds, mean.steps)) + geom_line(color = "dark green", size=1) +
@@ -216,7 +216,7 @@ Previewing 10 rows by 10 columns.
 intervalMatrix[1:10,1:10]
 ```
 
-```{r Heatmap of daily activity pattern in 5 minutes intervals}
+```{r Heatmap-daily-activity-pattern}
 colors<-length(unique(as.vector(intervalMatrix)))
 par(mar=c(4, 4, 4, 2))
 image(1:ncol(intervalMatrix),
@@ -236,7 +236,7 @@ missingDaily <- activity %>% group_by(date) %>% summarise(missing.intervals = su
 glimpse(missingDaily)
 ```
 
-```{r Total number of missing data intervals each day}
+```{r Missing-data-intervals}
 breaks <- as.Date(which(missingDaily$missing.intervals!=0), origin=missingDaily$date[1]-1)
 labels <- strftime(breaks, format = "%a, %d/%m", tz="GMT")
 ggplot(missingDaily, aes(date, missing.intervals)) + geom_col(fill = "dark red", color = "black") +
@@ -273,7 +273,7 @@ Whatever are the reasons of the missing data days, there are some noticible fact
 
 The following histogram shows the frequency of missing data days per week day:
 
-```{r Histogram of the missing data days per week day}
+```{r Histogram-missing-data-weekday}
 breaks <- wday(breaks)
 labels <- wday(1:7, label=TRUE)
 ggplot(mapping = aes(breaks)) + geom_histogram(binwidth = 0.5, fill = "dark red", color = "black") +
@@ -390,7 +390,7 @@ dailyImputedMean <- imputedMean %>% group_by(date) %>% summarise(total.steps = s
 glimpse(dailyImputedMean)
 ```
 
-```{r Histogram of the total number of steps taken each with mean imputation}
+```{r Histogram-steps-each-day-mean-imputation}
 ggplot(dailyImputedMean, aes(x = total.steps)) +
 
     geom_histogram(aes(y = ..density..), binwidth = 2000, fill = "dark green", color = "black") +
@@ -416,7 +416,7 @@ dailyImputedKNN <- imputedKNN %>% group_by(date) %>% summarise(total.steps = sum
 glimpse(dailyImputedKNN)
 ```
 
-```{r Histogram of the total number of steps taken each day with K-NN imputation}
+```{r HHistogram-steps-each-day-mean-KNN-imputation}
 ggplot(dailyImputedKNN, aes(x = total.steps)) +
 
     geom_histogram(aes(y = ..density..), binwidth = 2000, fill = "dark green", color = "black") +

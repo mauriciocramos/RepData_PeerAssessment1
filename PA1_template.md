@@ -121,7 +121,7 @@ ggplot(daily, aes(x = total.steps)) +
     scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
 ```
 
-![](PA1_template_files/figure-html/Histogram of the total number of steps taken each day-1.png)<!-- -->
+![](PA1_template_files/figure-html/Histogram-steps-each-day-1.png)<!-- -->
 
 ## Mean and median of the total number of steps taken per day
 
@@ -179,7 +179,7 @@ ggplot(fiveminutes, aes(seconds, mean.steps)) + geom_line(color = "dark green", 
     theme(legend.position = c(0.9, 0.85))
 ```
 
-![](PA1_template_files/figure-html/Average daily activity pattern in 5 minutes intervals-1.png)<!-- -->
+![](PA1_template_files/figure-html/Average-daily-activity-pattern-1.png)<!-- -->
 
 ## Maximum number of steps
 
@@ -288,7 +288,7 @@ image(1:ncol(intervalMatrix),
 mtext("(full horizontal lines are missing data days)")
 ```
 
-![](PA1_template_files/figure-html/Heatmap of daily activity pattern in 5 minutes intervals-1.png)<!-- -->
+![](PA1_template_files/figure-html/Heatmap-daily-activity-pattern-1.png)<!-- -->
 
 One can see there is missing data at full days.  It will be checked whether missing data also occurs during parts of the days.
 
@@ -317,7 +317,7 @@ ggplot(missingDaily, aes(date, missing.intervals)) + geom_col(fill = "dark red",
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-![](PA1_template_files/figure-html/Total number of missing data intervals each day-1.png)<!-- -->
+![](PA1_template_files/figure-html/Missing-data-intervals-1.png)<!-- -->
 
 Maxixum missing intervals in a day:
 
@@ -375,7 +375,7 @@ ggplot(mapping = aes(breaks)) + geom_histogram(binwidth = 0.5, fill = "dark red"
     ggtitle("Histogram of the missing data days per week day")
 ```
 
-![](PA1_template_files/figure-html/Histogram of the missing data days per week day-1.png)<!-- -->
+![](PA1_template_files/figure-html/Histogram-missing-data-weekday-1.png)<!-- -->
 
 Based on this distribution it's being assumed that missing data days occur at random.
 
@@ -556,7 +556,7 @@ ggplot(dailyImputedMean, aes(x = total.steps)) +
     scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
 ```
 
-![](PA1_template_files/figure-html/Histogram of the total number of steps taken each with mean imputation-1.png)<!-- -->
+![](PA1_template_files/figure-html/Histogram-steps-each-day-mean-imputation-1.png)<!-- -->
 
 ### Using *k*-nearest neighbor averaging
 
@@ -593,7 +593,7 @@ ggplot(dailyImputedKNN, aes(x = total.steps)) +
     scale_x_continuous(breaks=seq.int(0, 22000, by = 2000))
 ```
 
-![](PA1_template_files/figure-html/Histogram of the total number of steps taken each day with K-NN imputation-1.png)<!-- -->
+![](PA1_template_files/figure-html/HHistogram-steps-each-day-mean-KNN-imputation-1.png)<!-- -->
 
 ## Do these values differ from the estimates from the first part of the assignment?
 
