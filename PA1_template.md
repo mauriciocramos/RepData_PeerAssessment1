@@ -1,6 +1,5 @@
 # Reproducible Research: Peer Assessment 1
 Maurício Collaça  
-on `r Sys.Date()`  
 
 
 
