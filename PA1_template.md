@@ -29,50 +29,9 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 This research uses R version R version 3.4.2 (2017-09-28) and additional R packages:
 
 
-```r
-Sys.setlocale(category = "LC_ALL", locale = "us")
-```
-
-```
-## [1] "LC_COLLATE=English_United States.1252;LC_CTYPE=English_United States.1252;LC_MONETARY=English_United States.1252;LC_NUMERIC=C;LC_TIME=English_United States.1252"
-```
 
 ```r
 library(lubridate); library(dplyr); library(tidyr); library(ggplot2)
-```
-
-```
-## 
-## Attaching package: 'lubridate'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     date
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-```
-
-```
-## The following objects are masked from 'package:lubridate':
-## 
-##     intersect, setdiff, union
-```
-
-```
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
 ```
 
 The package versions used are dplyr 0.7.4, tidyr 0.7.1, ggplot2 2.2.1 and lubridate 1.6.0.
@@ -453,7 +412,7 @@ glimpse(dailyImputed)
 ggplot(dailyImputed, aes(x = total.steps)) +
     geom_histogram(binwidth = 1000, color = "dark green", size = 1, fill = "dark green", alpha=0.5) +
     geom_vline(aes(xintercept=mean(dailyImputed$total.steps),
-                   linetype = "Mean", size = "Mean"), color = "green") +
+                   linetype = "Mean", size = "Mean"), color = "dark green") +
     geom_vline(aes(xintercept=median(dailyImputed$total.steps),
                    linetype = "Median", size = "Median"), color = "dark green") +
     scale_linetype_manual(name = NULL, values = c("solid", "dotted")) +

@@ -36,8 +36,10 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 This research uses R version `r R.version.string` and additional R packages:
 
-```{r}
+```{r include=FALSE}
 Sys.setlocale(category = "LC_ALL", locale = "us")
+```
+```{r message=FALSE}
 library(lubridate); library(dplyr); library(tidyr); library(ggplot2)
 ```
 
@@ -303,7 +305,7 @@ glimpse(dailyImputed)
 ggplot(dailyImputed, aes(x = total.steps)) +
     geom_histogram(binwidth = 1000, color = "dark green", size = 1, fill = "dark green", alpha=0.5) +
     geom_vline(aes(xintercept=mean(dailyImputed$total.steps),
-                   linetype = "Mean", size = "Mean"), color = "green") +
+                   linetype = "Mean", size = "Mean"), color = "dark green") +
     geom_vline(aes(xintercept=median(dailyImputed$total.steps),
                    linetype = "Median", size = "Median"), color = "dark green") +
     scale_linetype_manual(name = NULL, values = c("solid", "dotted")) +
