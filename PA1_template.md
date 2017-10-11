@@ -26,23 +26,67 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 ************************************
 # Loading and preprocessing the data
 
-This research requires additional R packages installed and loaded.
+This research uses R version R version 3.4.2 (2017-09-28) and additional R packages:
 
 
 ```r
-library(dplyr); library(tidyr); library(ggplot2); library(lubridate)
+Sys.setlocale(category = "LC_ALL", locale = "us")
 ```
 
-The versions used in this research are dplyr 0.5.0, tidyr 0.6.1, ggplot2 2.2.1 and lubridate 1.6.0.
+```
+## [1] "LC_COLLATE=English_United States.1252;LC_CTYPE=English_United States.1252;LC_MONETARY=English_United States.1252;LC_NUMERIC=C;LC_TIME=English_United States.1252"
+```
 
-The dataset zip file is automatically downloaded and uncompressed in case it's not already available locally.
+```r
+library(lubridate); library(dplyr); library(tidyr); library(ggplot2)
+```
+
+```
+## 
+## Attaching package: 'lubridate'
+```
+
+```
+## The following object is masked from 'package:base':
+## 
+##     date
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:lubridate':
+## 
+##     intersect, setdiff, union
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+The package versions used are dplyr 0.7.4, tidyr 0.7.1, ggplot2 2.2.1 and lubridate 1.6.0.
+
+The dataset zip file is automatically downloaded and uncompressed if not previously downloaded.
 
 
 ```r
 url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 destfile = "activity.zip"
-if (!file.exists(destfile)) download.file(url, destfile, mode = "wb", cacheOK = FALSE, quiet = TRUE)
-if (!file.exists("activity.csv") & file.exists(destfile)) unzip(destfile, setTimes = TRUE)
+if (!file.exists(destfile))
+    download.file(url, destfile, mode = "wb", cacheOK = FALSE, quiet = TRUE)
+if (!file.exists("activity.csv") & file.exists(destfile))
+    unzip(destfile, setTimes = TRUE)
 ```
 
 Import data columns with appropriate R classes and values: steps and interval as `integer` data type, date as `Date` data type and "NA" strings as `NA` values.
@@ -81,8 +125,6 @@ glimpse(daily)
 
 ## Histogram of the total steps each day
 
-**Frequency histogram.**
-
 
 ```r
 ggplot(daily, aes(x = total.steps)) +
@@ -94,34 +136,11 @@ ggplot(daily, aes(x = total.steps)) +
     scale_x_continuous(breaks=seq.int(0, 22000, by = 2000)) +
     scale_y_continuous(breaks=0:(22000/2000-1)) +
     xlab("total steps each day") +
-    ggtitle("Frequency histogram of the total steps each day") +
+    ggtitle("Histogram of the total steps each day") +
     theme(legend.position = c(0.9, 0.85))
 ```
 
-![](PA1_template_files/figure-html/Frequency-histogram-total-steps-each-day-1.png)<!-- -->
-
-**Density histogram.**
-
-
-```r
-ggplot(daily, aes(x = total.steps)) +
-    geom_histogram(aes(y = ..density..), binwidth = 1000, color = "dark red", size = 1, fill = "dark red", alpha=0.5) +
-    geom_density(aes(colour = "Kernel density"), size = 1, fill = "dark red", alpha = 0.3) +
-    stat_function(fun = dnorm,
-                  args = list(mean = mean(daily$total.steps), sd = sd(daily$total.steps)),
-                  aes(colour = "Normal curve"), size = 1) +
-    scale_colour_manual(name = NULL, values = c("dark red", "red")) +
-    geom_vline(aes(xintercept=mean(daily$total.steps), linetype = "Mean", size = "Mean"), color = "red") +
-    geom_vline(aes(xintercept=median(daily$total.steps), linetype = "Median", size = "Median"), color = "dark red") +
-    scale_linetype_manual(name = NULL, values = c("solid", "dotted")) +
-    scale_size_manual(name = NULL, values = c(1, 1.1)) +
-    scale_x_continuous(breaks=seq.int(0, 22000, by = 2000)) +
-    xlab("total steps each day") +
-    ggtitle("Density histogram of the total steps each day") +
-    theme(legend.position = c(0.9, 0.75))
-```
-
-![](PA1_template_files/figure-html/Density-histogram-total-steps-each-day-1.png)<!-- -->
+![](PA1_template_files/figure-html/histogram-total-steps-each-day-1.png)<!-- -->
 
 ## Mean and median of the total number of steps taken per day
 
@@ -156,10 +175,20 @@ Time series plot of the 5-minute interval (x-axis) and the average number of ste
 
 **Data transformation.**
 
+The Identifier for the 5-minute interval is an integer value coded as **hhmm**, for instance, the interval number 100 means the 13th 5-minute interval at precisely at 1:00am.
+
+In order to improve the format of the x scale of the time series plot, it's calculated the actual number of seconds from the interval identifier.
+
 
 ```r
-interval2seconds <- function(interval) {trunc(interval/100) * 60 * 60 + (interval %% 100)*60}
-five <- activity %>% group_by(interval) %>% summarise(mean.steps = mean(steps, na.rm = TRUE)) %>% mutate(seconds = interval2seconds(interval)) %>% as.data.frame
+interval2seconds <- function(interval) {
+    trunc(interval/100) * 60 * 60 + (interval %% 100)*60
+}
+five <- activity %>%
+    group_by(interval) %>%
+    summarise(mean.steps = mean(steps, na.rm = TRUE)) %>%
+    mutate(seconds = interval2seconds(interval)) %>%
+    as.data.frame
 glimpse(five)
 ```
 
@@ -178,19 +207,17 @@ glimpse(five)
 breaks <- seq(0, 86400, length.out = 13)
 labels <- strftime(as.POSIXct(breaks, tz="GMT", origin="1970-01-01"), format = "%H:%M", tz="GMT")
 ggplot(five, aes(seconds, mean.steps)) +
-    scale_x_time(breaks = breaks, labels = labels) +
+    scale_x_continuous(breaks = breaks, labels = labels) +
     geom_line(size=1, aes(colour="Average steps")) +
     geom_point(color = "black", size=2, pch = 21, alpha=0.5) +
-    geom_smooth(size = 0.1, method="lm", aes(colour="Linear trend")) +
-    geom_smooth(size = 0.1, method="loess", aes(colour = "Polynomial trend")) +
     geom_rug(sides="l", color = "dark green") +
     scale_colour_manual(name = 'Series', values=c("dark green", "dark red", "blue")) +
     ggtitle("Average daily activity pattern in 5 minutes intervals") +
-    ylab("Average Steps") + xlab("time of the day") +
-    theme(legend.position = c(0.85, 0.8))
+    ylab("average steps across all days") + xlab("5-minutes interval") +
+    theme(legend.position = "none")
 ```
 
-![](PA1_template_files/figure-html/Average-daily-activity-pattern-1.png)<!-- -->
+![](PA1_template_files/figure-html/average-daily-activity-pattern-1.png)<!-- -->
 
 ## Maximum number of steps interval
 
@@ -221,7 +248,7 @@ Note that there are a number of days/intervals where there is missing values (co
 ## [1] 2304
 ```
 
-Proportion of the missing values.
+The proportion of the missing values is considerably high and deserves an exploration of the missing data pattern.
 
 
 ```r
@@ -232,8 +259,6 @@ Proportion of the missing values.
 ## [1] 0.1311475
 ```
 
-This proportion of the dataset observations is considered high and deserves an exploration of the missing data pattern.
-
 ## Strategy for filling in all of the missing values in the dataset
 
 The strategy for filling in all of the missing values in the dataset does not need to be sophisticated. For example, one can use the mean/median for that day, or the mean for that 5-minute interval, etc.
@@ -243,7 +268,7 @@ According to Peng (2016), in the book [Exploratory Data Analysis](https://leanpu
 _"Determine the reason for the missing data; what is the process that lead to the data
 being missing? Is the proportion of missing values so high as to invalidate any sort of analysis? Is there information in the dataset that would allow you to predict/infer the values of the missing data?"_
 
-This research scope didn't cover reviewing published information about the reasons of the missing data of this specific dataset, one can presume a non-exhaustive hypothesis list:
+A non-exhaustive hypothesis list:
 
 * The device may fail to collect and store raw data or run out of battery.  
 * The test subject forget either to charge or switch on the device during the experiment period.  
@@ -306,9 +331,9 @@ image(1:ncol(intervalMatrix),
 mtext("(full horizontal lines are missing data days)")
 ```
 
-![](PA1_template_files/figure-html/Heatmap-daily-activity-pattern-1.png)<!-- -->
+![](PA1_template_files/figure-html/heatmap-daily-activity-pattern-1.png)<!-- -->
 
-One can clearly see in the white horizontal lines that there is missing data at full days.  It will be checked whether missing data also occurs during parts of the days.
+One can roughly see in the white horizontal lines that there is missing data at full days.  It will be checked more precisely whether missing data also occurs during parts of the days.
 
 #### Total number of missing data intervals each day
 
@@ -342,7 +367,7 @@ ggplot(missingDaily, aes(date, missing.intervals)) +
     theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 ```
 
-![](PA1_template_files/figure-html/Missing-data-intervals-1.png)<!-- -->
+![](PA1_template_files/figure-html/missing-data-intervals-1.png)<!-- -->
 
 Whatever are the reasons of the missing data days, there are some noticeable facts:
 
@@ -366,7 +391,7 @@ ggplot(mapping = aes(breaks)) +
     ggtitle("Histogram of the missing data days per week day")
 ```
 
-![](PA1_template_files/figure-html/Histogram-missing-data-weekday-1.png)<!-- -->
+![](PA1_template_files/figure-html/histogram-missing-data-weekday-1.png)<!-- -->
 
 Based on this distribution it's being assumed that missing data days occur at random.
 
@@ -374,35 +399,8 @@ As there are only full missing data days, there is no point to perform a deeper 
 
 ### Imputation technique
 
-This research will use the single imputation using mean substitution technique.
+The imputation technique consists of replacing all 2304 missing interval values with their respective *Average daily activity pattern in 5-minutes intervals*.
 
-_"Involves replacing any missing value with the mean of that variable for all other cases, which has the benefit of not changing the sample mean for that variable. However, mean imputation attenuates any correlations involving the variable(s) that are imputed. This is because, in cases with imputation, there is guaranteed to be no relationship between the imputed variable and any other measured variables. Thus, mean imputation has some attractive properties for univariate analysis but becomes problematic for multivariate analysis."_ [Wikipedia][2], 2017.
-
-[2]: https://en.wikipedia.org/wiki/Imputation_(statistics)#Imputation_techniques
-
-One can assume that the mean substitution is an adequate technique because this research is about the unique variable `steps`, so, univariate data.
-
-To impute the missing 5-minutes intervals with their respective average across all days is less biased than with just a single overall average.  The following table compares the different averages.
-
-Steps statistics                                                   |R code|Result
--------------------------------------------------------------------|------|:---:
-Mean of the overall sample|`mean(activity$steps, na.rm=TRUE)`|37.3825996|
-Median of the overall sample|`median(activity$steps, na.rm=TRUE)`|0|
-Mean of the total number of steps taken per day distributed in 5 minutes|`mean(daily$total.steps, na.rm = TRUE)/17280`|0.5413327|
-Median of the total number of steps taken per day distributed in 5 minutes|`median(daily$total.steps, na.rm = TRUE)/17280`|0.6015625|
-**Average daily activity pattern in 5-minutes intervals**|`lapply(with(activity,split(steps,interval)),mean,na.rm=T)`|**288 values**
-
-Quantiles of the *Average daily activity pattern in 5-minutes intervals*.
-
-
-```r
-summary(five$mean.steps)
-```
-
-```
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##   0.000   2.486  34.110  37.380  52.830 206.200
-```
 
 ## Imputed dataset
 
@@ -448,7 +446,7 @@ glimpse(dailyImputed)
 ## $ total.steps <int> 10762, 126, 11352, 12116, 13294, 15420, 11015, 107...
 ```
 
-**Frequency histogram of the total steps each day after mean substituion.**
+**Histogram of the total steps each day after mean substituion.**
 
 
 ```r
@@ -463,11 +461,11 @@ ggplot(dailyImputed, aes(x = total.steps)) +
     scale_x_continuous(breaks=seq.int(0, 22000, by = 2000)) +
     scale_y_continuous(breaks=0:(22000/2000+4)) +
     xlab("total steps each day") +
-    ggtitle("Frequency histogram of total the steps each day after mean substitution") +
+    ggtitle("Histogram of total the steps each day after mean substitution") +
     theme(legend.position = c(0.9, 0.85))
 ```
 
-![](PA1_template_files/figure-html/Frequency-histogram-total-steps-each-day-after-imputation-1.png)<!-- -->
+![](PA1_template_files/figure-html/histogram-total-steps-each-day-after-imputation-1.png)<!-- -->
 
 **Do these values differ from the estimates from the first part of the assignment?**
 
@@ -497,66 +495,9 @@ round(median(dailyImputed$total.steps))
 ## [1] 10762
 ```
 
-The density histograms shows the changes in the kernel density and the sample normal distribution.
-
-**Density histogram of the total steps each day after mean substitution.**
-
-
-```r
-ggplot(dailyImputed, aes(x = total.steps)) +
-    geom_histogram(aes(y = ..density..),
-                   binwidth = 1000, color = "dark green", size = 1, fill = "dark green", alpha=0.5) +
-    geom_density(aes(colour = "Kernel density"), size = 1, fill = "dark green", alpha = 0.3) +
-    stat_function(fun = dnorm,
-              args = list(mean = mean(dailyImputed$total.steps), sd = sd(dailyImputed$total.steps)),
-              aes(colour = "Normal curve"), size = 1) +
-    scale_colour_manual(name = NULL, values = c("dark green", "green")) +
-    geom_vline(aes(xintercept=mean(dailyImputed$total.steps), linetype = "Mean", size = "Mean"), color = "green") +
-    geom_vline(aes(xintercept=median(dailyImputed$total.steps), linetype = "Median", size = "Median"), color = "dark green") +
-    scale_linetype_manual(name = NULL, values = c("solid", "dotted")) +
-    scale_size_manual(name = NULL, values = c(1, 1.1)) +
-    scale_x_continuous(breaks=seq.int(0, 22000, by = 2000)) +
-    xlab("total steps each day") +
-    ggtitle("Density histogram of the total steps each day after mean substitution") +
-    theme(legend.position = c(0.9, 0.75))
-```
-
-![](PA1_template_files/figure-html/Density-histogram-total-steps-each-day-after-imputation-1.png)<!-- -->
-
-**Overlaid density histograms of the total steps each day after imputation**
-
-Merging histogram data.
-
-
-```r
-merged <- bind_rows(daily %>% select(total.steps) %>% mutate(state = "Former"), dailyImputed %>% select(total.steps) %>% mutate(state = "Imputed")) %>% mutate(state=as.factor(state))
-```
-
-Plotting.
-
-
-```r
-ggplot(merged, aes(x = total.steps)) +
-    geom_histogram(aes(y = ..density.., colour = state, fill = state), binwidth = 1000, alpha = 0.5, position = "dodge", size = 1) +
-    geom_density(aes(colour = state, fill = state), alpha = 0.3, size = 1) +
-    scale_fill_manual(name = "Histograms", values = c("dark red", "dark green")) +
-    scale_colour_manual(name = "Histograms", values = c("dark red", "dark green")) +
-    stat_function(fun = dnorm, args = list(mean = mean(daily$total.steps), sd = sd(daily$total.steps)),
-                  size = 1, color = "red", linetype = "solid") +
-    stat_function(fun = dnorm, args = list(mean = mean(dailyImputed$total.steps), sd = sd(dailyImputed$total.steps)),
-                  size = 1, color = "green", linetype = "solid") + 
-    scale_x_continuous(breaks=seq.int(0, 22000, by = 2000)) +
-    xlab("total steps each day") +
-    ggtitle("Overlaid density histograms of the total steps each day after imputation") +
-    theme(legend.position = c(0.9, 0.60))
-```
-
-![](PA1_template_files/figure-html/Overlaid-density-histograms-after-imputation-1.png)<!-- -->
 
 ***************************************************************************
 # Are there differences in activity patterns between weekdays and weekends?
-
-For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
 
 ## Weekdays and weekend factors
 
@@ -564,7 +505,8 @@ Create a new factor variable in the dataset with two levels – “weekday” an
 
 
 ```r
-activityImputed <- activityImputed %>% mutate(dayType=as.factor(ifelse(wday(date)%%6==1,"weekend","weekday")))
+activityImputed <- activityImputed %>%
+    mutate(dayType=as.factor(ifelse(wday(date)%%6==1,"weekend","weekday")))
 glimpse(activityImputed)
 ```
 
@@ -577,7 +519,7 @@ glimpse(activityImputed)
 ## $ dayType  <fctr> weekday, weekday, weekday, weekday, weekday, weekday...
 ```
 
-## Five-minute interval average steps across all weekdays or weekends
+## Five-minutes interval average steps across all weekdays or weekends
 
 Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
@@ -604,27 +546,16 @@ glimpse(fiveImputed)
 ```r
 breaks <- seq(0, 86400, length.out = 13)
 labels <- strftime(as.POSIXct(breaks, tz="GMT", origin="1970-01-01"), format = "%H:%M", tz="GMT")
-ggplot(fiveImputed, aes(seconds, mean.steps, colour = dayType)) +
-    scale_x_time(breaks = breaks, labels = labels) +
+ggplot(fiveImputed, aes(seconds, mean.steps), colour = "black") +
+    facet_grid(dayType ~.) +
+    scale_x_continuous(breaks = breaks, labels = labels) +
     geom_line(size=1) +
-    #geom_point(color = "black", size=2, pch = 21, alpha=0.5) +
-    #geom_smooth(size = 0.1, method="lm", aes(colour="Linear trend")) +
-    geom_smooth(size = 0.1, method="loess") +
-    #geom_rug(sides="l", color = "dark green") +
-    scale_colour_manual(name = "Type of day", values=c("dark red", "blue")) +
-    ggtitle("Average daily activity pattern in 5 minutes intervals on week days and weekends") +
-    ylab("Average Steps") + xlab("time of the day") +
-    theme(legend.position = c(0.9, 0.85))
+    geom_point(color = "black", size=2, pch = 21, alpha=0.5) +
+    geom_rug(sides="l") +
+    ggtitle("Average daily activity pattern in 5 minutes intervals by weekday or weekend") +
+    ylab("Average Steps") + xlab("5-minutes interval") +
+    theme(legend.position = "none")
 ```
 
-![](PA1_template_files/figure-html/Average-daily-activity-pattern-weekdays-weekends-1.png)<!-- -->
+![](PA1_template_files/figure-html/average-daily-activity-pattern-weekdays-weekends-1.png)<!-- -->
 
-By eyeball, one can see differences in activity patterns between weekdays and weekends:
-
-* During week days, the average is roughly greater from 5am-9am and 6pm-7pm.
-* During the weekends, the average is roughly greater from 10am-6pm and 7pm-10pm.
-
-The intersections of the trendlines show an alternative answer to the question:
-
-* During week days, the average is roughly greater from 2am to 10am.
-* During the weekends, the average is roughly greater from 10am-10pm.
